@@ -31,14 +31,12 @@ password = md5(b'somestring').hexdigest()
 ```
 Note: This is python 3.5. In earlier versions the import is different.
     Furthermore notice that md5 requires the string as binary, so don't
-    forget the `b` prefix.
+    forget the `b` prefix.x
 """
 
 from suds.client import Client
 from contextlib import contextmanager
 import html
-
-from .choices import BoothChoice, PacketChoice
 
 
 class AMIVCRMConnector(object):
@@ -213,164 +211,85 @@ class CRMImporter(object):
 
         self.client = AMIVCRMConnector(url, appname, username, password)
 
-        # Get initial data
-        self.refresh()
+    def get_companies(self):
+        """Get a list of companies."""
+        with self.client.session():
+            response = self.client.get_full_entry_list(
+                module_name="Accounts",
+                query="accounts_cstm.messeteilnahme_c = 1",
+                order_by="accounts.name",
+                select_fields=['name', 'id'])
 
-    def refresh(self):
-        """Connect to CRM and refresh company data."""
-        (self.data, self.errors) = self._get_contract_data()
+        return {item['name']: item['id'] for item in response}
 
-    def _parse_company_response(self, response):
-        """Parse data for the template.
+    def get_company_data(self, id):
+        """Get the data from soap for a single company.
 
         Args:
-            response (dict): soap response as a dict
+            id (str): The id of the company
 
         Returns:
-            dict: Data formatted for contract creation.
-        """
-        # Because of the way the amiv letter works, street and city must not be
-        # None
-        missing = [field for field in ['shipping_address_street',
-                                       'shipping_address_postalcode',
-                                       'shipping_address_city']
-                   if response[field] is None]
-
-        if len(missing) > 0:
-            raise Exception("The following fields are missing: " +
-                            ', '.join(missing))
-
-        # Basic fields
-        letterdata = {
-            'amivrepresentative': response['assigned_user_name'],
-            'companyname': response['name'],
-            'companyaddress': response['shipping_address_street'],
-            'companycity': ("%s %s" % (response['shipping_address_postalcode'],
-                                       response['shipping_address_city'])),
-        }
-
-        # Get packets
-        letterdata['media'] = (
-            PacketChoice.media
-            if response['mediapaket_c'] == "mediaPaket" else None)
-
-        letterdata['business'] = (
-            PacketChoice.business
-            if response['packet_c'] == "business" else None)
-
-        letterdata['first'] = (
-            PacketChoice.first
-            if response['packet_c'] == "first" else None)
-
-        # Include country only if its not "Schweiz" and is specified
-        country = response.get('shipping_address_country', "Schweiz")
-        if country in ["Schweiz", None]:
-            letterdata['companycountry'] = ""
-        else:
-            letterdata['companycountry'] = response['shipping_address_country']
-
-        # Get fair days
-        if (response['tag1_c'] == '1') and (response['tag2_c'] == '1'):
-            # Both days
-            n_days = 2
-            letterdata['days'] = "both"
-        else:
-            # only one day
-            n_days = 1
-
-            # Check which day to print correct date on contract
-            if (response['tag1_c'] == '1'):
-                letterdata['days'] = "first"
-            if (response['tag2_c'] == '1'):
-                letterdata['days'] = "second"
-
-        # Get booth choice
-        # The field 'tischgroesse_c' is weirdly formatted.
-        # 'kein' == small both
-        # 'ein' == big booth
-        # 'zwei' == startup
-        if response['tischgroesse_c'] == 'kein':
-            boothsize = "small"
-        elif response['tischgroesse_c'] == 'ein':
-            boothsize = "big"
-        elif response['tischgroesse_c'] == 'zwei':
-            boothsize = "startup"
-        else:
-            raise ValueError("Unrecognized value for 'tischgroesse_c': " +
-                             response['tischgroesse_c'])
-
-        # Get kategory, map katA to A etc
-        mapping = {"kat" + letter: letter for letter in ['A', 'B', 'C']}
-        category = mapping[response['kategorie_c']]
-
-        # With size, category and days we can get the right choice
-        letterdata['boothchoice'] = BoothChoice((boothsize, category, n_days))
-
-        # Get person that did the fair signup:
-        # Always at the beginning of the "kontaktinfo_c" field.
-        # TODO (Alex): This seems a little hacked to me. As soon as we have a
-        #   proper way to identify the main contact we should switch
-        try:
-            name = ''.join(response['kontaktinfo_c'].split(',')[0:2])
-        except Exception:
-            raise ValueError("Company representative could not be imported "
-                             "from field 'kontaktinfo_c': with content "
-                             "'%s'" % response.get('kontaktinfo_c', None))
-
-        letterdata['companyrepresentative'] = name
-
-        return letterdata
-
-    def _get_contract_data(self):
-        """Get the data from soap to fill in the template.
-
-        Returns:
-            tuple (list, dict): The list contains all succesfully imported
-                companies formatted for the latex template.
-                The dictionary contains all errors and has the schema:
-                companyname: reason for error.
+            dict: Company data
         """
         # Fields needed
-
         fields = [
             'id',
+
+            # Booth and fields of interest
+            'standplatz11_c',
+            'interest_subject11_c',
+
+            # Sidebar
             'name',
-            'assigned_user_name',
-            'shipping_address_street',
-            'shipping_address_street_2',
-            'shipping_address_street_3',
-            'shipping_address_street_4',
-            'shipping_address_city',
-            'shipping_address_state',
-            'shipping_address_postalcode',
-            'shipping_address_country',
-            'tag1_c',
-            'tag2_c',
-            'tischgroesse_c',
-            'packet_c',
-            'mediapaket_c',
-            'kategorie_c',
-            'kontaktinfo_c'
+            'website',
+
+            'study_contact11_c',
+
+            'employees_ch11_c',
+            'employees_world11_c',
+
+            'job_offer11_c',
+
+            # Text
+            'about_us11_c',
+            'our_industries11_c'
         ]
 
         # Get data
         with self.client.session():
             results = self.client.get_full_entry_list(
                 module_name="Accounts",
-                query="accounts_cstm.messeteilnahme_c = 1",
+                query="accounts.id = '%s'" % id,
                 order_by="accounts.name",
                 select_fields=fields)
 
-        # Parse data to fit template and collect errors
-        data = []
-        errors = {}
+        if not results:
+            raise Exception("Nothing found!")
+        else:
+            result = results[0]
 
-        for company in results:
-            try:
-                parsed = self._parse_company_response(company)
-            except Exception as e:
-                errors[company['name']] = str(e)
-            else:
-                data.append(parsed)
+        def parse_list(raw):
+            # Format is ^something^,^otherthing^,..
+            return [item[1:-1] for item in raw.split(",")]
 
-        return (data, errors)
+        parsed = {
+            'id': result['id'],
+
+            'booth': result['standplatz11_c'],
+            'interested_in': parse_list(result['interest_subject11_c']),
+
+            'name': result['name'],
+            'website': result['website'],
+
+            'contact': result['study_contact11_c'],
+
+            'employees_ch': result['employees_ch11_c'],
+            'employees_world': result['employees_world11_c'],
+
+            'offering': parse_list(result['job_offer11_c']),
+
+            'about': result['about_us11_c'],
+            'focus': result['our_industries11_c']
+        }
+
+        return parsed

@@ -3,78 +3,54 @@
 """The app."""
 
 from os import path
-from locale import setlocale, LC_TIME
 from ruamel import yaml
 
 from flask import (Flask, render_template, send_file, redirect, url_for,
                    session, request)
 
-from contractor.tex import render_tex
-from contractor.soapclient import CRMImporter
-from contractor.api_auth import api_auth, protected
-from contractor.yearly_settings import YearlySettingsForm, load_yearly_settings
+# from fairguidegenerator.tex import render_tex
+from fairguidegenerator.soapclient import CRMImporter
 
 # Find the directory where the script is placed
 root_dir = path.dirname(path.realpath(__file__))
 
-app = Flask('contractor')
-
-app.config.from_object('contractor.settings')
+app = Flask('fairguidegenerator')
+app.config.from_object('fairguidegenerator.settings')
 
 # Load User config
 try:
     with open('config.yml', 'r') as f:
         app.config.from_mapping(yaml.load(f))
 except:
-    raise("No config found! Use `python init.py` to create.")
-
-# Set locale to ensure correct weekday format
-setlocale(LC_TIME, app.config['LOCALE'])
+    raise Exception("No config found! Use `python init.py` to create.")
 
 # Get CRM connection
 CRM = CRMImporter(app)
 
-# Get Auth
-app.register_blueprint(api_auth)
-
 
 # Routes
 
-@app.route('/', methods=['GET', 'POST'])
-@protected
+@app.route('/')
 def main():
     """Main view.
 
     Includes output format and yearly settings.
     """
-    # Check if output format is specified
-    format = request.args.get('output', None)
-    if format in ["mail", "email", "tex"]:
-        session['output_format'] = format
 
-    # Form for yearly settings
-    settings_form = YearlySettingsForm()
+    def link(item):
+        return "<a href=%s>%s</a>" % (url_for('companypage', id=item[1]),
+                                      item[0])
 
-    # Safe new data if valid
-    settings_form.validate_and_save()
-
-    return render_template('main.html',
-                           user=session['logged_in'],
-                           output_format=session.get('output_format', 'mail'),
-                           settings_form=settings_form,
-                           companies=CRM.data,
-                           errors=CRM.errors)
+    return "<br>".join([link(item) for item in CRM.get_companies().items()])
 
 
-@app.route('/refresh')
-@protected
-def refresh():
-    """Get companies again."""
-    CRM.refresh()
-
-    return redirect(url_for('main'))
+@app.route('/<id>')
+def companypage(id):
+    """Return the rendered page for a single company."""
+    return str(CRM.get_company_data(id))
 
 
+'''
 @app.route('/contracts')
 @app.route('/contracts/<int:id>')
 @protected
@@ -118,3 +94,4 @@ def send_contracts(id=None):
     )
 
     return send_file(filepath, as_attachment=True)
+'''
