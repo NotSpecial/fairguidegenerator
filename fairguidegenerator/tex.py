@@ -29,14 +29,13 @@ guaranteed)
 """
 
 from jinja2 import Environment, PackageLoader, StrictUndefined
-from datetime import datetime as dt
-from werkzeug.utils import secure_filename
 import subprocess
 import os
 import re
 
 # Create the jinja env
-texenv = Environment(loader=PackageLoader('contractor', 'tex_templates'))
+texenv = Environment(
+    loader=PackageLoader('fairguidegenerator', 'tex_templates'))
 texenv.block_start_string = '((*'
 texenv.block_end_string = '*))'
 texenv.variable_start_string = '((('
@@ -70,94 +69,40 @@ texenv.filters.update({
 
     # Escape newline
     'newline': lambda x: x.replace('\n', r'\\'),
-
-    # Filters to parse date, including short one to list dates nicely
-    # Format: Dienstag, 18.10.2016
-    'fulldate': lambda date: dt.strftime(date, "%A, %d.%m.%Y"),
-    # Format: Dienstag, 18.
-    'shortdate': lambda date: dt.strftime(date, "%A, %d.")
 })
 
 
-template = texenv.get_template("kontakt_contract_template.tex")
+template = texenv.get_template("company_page.tex")
 
 
-def render_tex(fairtitle="",
-               president="",
-               sender="",
-               prices={},
-               days={},
-               letterdata=[],
-               texpath='.',
-               output_dir='.',
-               contract_only=False,
-               return_tex=False):
+def render_tex(output_dir, **companydata):
     """Render the template and return the filename.
-
-    If return_tex is true, the raw tex will be returned and nothing rendered.
-
-    Args:
-        fairtitle (str): The title of the fair, e.g. "Kontakt.16"
-        president (str): Current contract president. He/She will need to sign
-            the contracts
-        sender (str): The sender of the contracts, usually president or
-            treasurer
-        prices (dict): Needs the keys 'booths', 'media', 'business', 'first'
-            booths has to be another dict with keys matching the keys for
-            boothchoice. The prices itself are strings without 'CHF', i.e.
-            {'media': '1234'}
-        days (dict): The keys must be 'first', 'second', 'both' with the
-            correct day(s) and date(s) as values (str)
-        letterdata (list): List of parsed companies
-        texpath (str): path to the `amivtex` folder on the system
-        contract_only (bool): Return only the contract or cover letter plus
-            contract in duplicate if False
-        return_tex: If true, return tex source instead of pdf.
-        output_dir (str): path where results will be stored.
 
     Returns:
         str: filename (including path) to output
     """
-    # We need to make sure the tex path ends in a slash, use os.path for that
-    texpath = os.path.join(texpath, '')
+    # Render the template
+    rendered = template.render(**companydata)
 
-    rendered = template.render(fairtitle=fairtitle,
-                               texpath=texpath,
-                               president=president,
-                               sender=sender,
-                               prices=prices,
-                               days=days,
-                               letterdata=letterdata,
-                               contract_only=contract_only)
-
-    basename = 'contracts_' + dt.utcnow().strftime('%Y')
-
-    # If a single contract is requested, add the company name to the filename
-    if len(letterdata) == 1:
-        basename += '_' + secure_filename(letterdata[0]['companyname'])
-
-    filename = os.path.join(output_dir, basename)
-
+    # Create filenames and directory (if needed)
+    filename = os.path.join(output_dir, companydata['name'])
     texname = filename + '.tex'
+
+    os.makedirs(output_dir, exist_ok=True)
 
     with open(texname, 'wb') as f:
         f.write(rendered.encode('utf-8'))
 
-    if return_tex:
-        return texname
-    else:
-        commands = ["xelatex",
-                    "-output-directory", output_dir,
-                    "-interaction=batchmode", texname]
+    commands = ["pdflatex",
+                "-output-directory", output_dir,
+                "-interaction=batchmode", texname]
 
-        # sic! needs to be run twice to insert references
-        # Capture output with PIPE (just to keep console clean)
-        # Check true requires status code 0
-        subprocess.run(commands, stdout=subprocess.PIPE, check=True)
-        subprocess.run(commands, stdout=subprocess.PIPE, check=True)
+    # Capture output with PIPE (just to keep console clean)
+    # Check true requires status code 0
+    subprocess.run(commands, stdout=subprocess.PIPE, check=True)
 
-        # Clean up
-        for ending in ['.tex', '.aux', '.log']:
-            os.remove('%s%s' % (filename, ending))
+    # Clean up
+    for ending in ['.tex', '.aux', '.log']:
+        os.remove('%s%s' % (filename, ending))
 
-        return filename + '.pdf'
+    return filename + '.pdf'

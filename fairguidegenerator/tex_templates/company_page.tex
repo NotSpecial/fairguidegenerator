@@ -1,0 +1,31 @@
+\documentclass[a4paper]{article}
+
+\author{Alexander Dietmüller}
+
+\usepackage[nswissgerman]{babel}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+
+\begin{tabular}{l l}
+Standplatz & ((( booth )))\\
+\hline
+Firma & ((( name ))) \\
+Website & ((( website )))\\
+Mitarbeiter in der Schweiz & ((( employees_ch )))\\
+Mitarbeiter weltweit &((( employees_world )))\\
+\hline
+Suchen nach & ((( ", ".join(interested_in) )))\\
+Bieten an & ((( ", ".join(offering) )))\\
+\end{tabular}
+
+\section*{Über uns}
+((( about|newline )))
+
+\section*{Schwerpunkte}
+((( focus|newline )))
+
+\section*{Kontakt}
+((( contact|newline )))
+
+\end{document}
