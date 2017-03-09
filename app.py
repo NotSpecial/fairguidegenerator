@@ -5,7 +5,7 @@
 from os import path
 from ruamel import yaml
 
-from flask import (Flask, send_file, url_for)
+from flask import (Flask, send_file, url_for, abort)
 
 from fairguidegenerator.tex import render_tex
 from fairguidegenerator.soapclient import CRMImporter
@@ -39,12 +39,16 @@ def main():
         return "<a href=%s>%s</a>" % (url_for('companypage', id=item[1]),
                                       item[0])
 
+    # Super simple demo
     return "<br>".join([link(item) for item in CRM.get_companies().items()])
 
 
 @app.route('/<id>')
 def companypage(id):
     """Return the rendered page for a single company."""
-    companydata = CRM.get_company_data(id)
+    try:
+        companydata = CRM.get_company_data(id)
+    except:
+        abort(404)
     filename = render_tex(app.config['STORAGE_DIR'], **companydata)
     return send_file(filename)
