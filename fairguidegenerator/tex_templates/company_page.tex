@@ -1,31 +1,27 @@
-\documentclass[a4paper]{article}
-
-\author{Alexander Dietmüller}
-
-\usepackage[nswissgerman]{babel}
-\usepackage[utf8]{inputenc}
+\documentclass{amivbooklet}
 
 \begin{document}
 
-\begin{tabular}{l l}
-Standplatz & ((( booth )))\\
-\hline
-Firma & ((( name ))) \\
-Website & ((( website )))\\
-Mitarbeiter in der Schweiz & ((( employees_ch )))\\
-Mitarbeiter weltweit &((( employees_world )))\\
-\hline
-Suchen nach & ((( ", ".join(interested_in) )))\\
-Bieten an & ((( ", ".join(offering) )))\\
-\end{tabular}
+\name{((( name )))}
+\website{((( website )))}
+\booth{((( booth )))}
+\logo{demo_logo.png}
+\boxes{%
+    ((* if 'ITET' in interested_in *))\itet((* endif *))
+    ((* if 'MAVT' in interested_in *))\mavt((* endif *))
+    ((* if 'MTEC' in interested_in *))\mtec((* endif *))
+}
+\contact{((( contact|newline )))}
+\employees{%
+    ((( employees_ch ))) in der Schweiz\\
+    ((( employees_world ))) in der Welt%
+}
+\offers{((( "\\".join(offering) )))}
+\about{((( about|l|newline )))}
+\focus{((( focus|l|newline )))}
 
-\section*{Über uns}
-((( about|newline )))
-
-\section*{Schwerpunkte}
-((( focus|newline )))
-
-\section*{Kontakt}
-((( contact|newline )))
-
+% Demo left side
+\companypage
+% Demo right side
+\companypage
 \end{document}

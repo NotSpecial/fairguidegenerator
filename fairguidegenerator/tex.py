@@ -93,7 +93,7 @@ def render_tex(output_dir, **companydata):
     with open(texname, 'wb') as f:
         f.write(rendered.encode('utf-8'))
 
-    commands = ["pdflatex",
+    commands = ["xelatex",
                 "-output-directory", output_dir,
                 "-interaction=batchmode", texname]
 
