@@ -1,5 +1,13 @@
 # Contractor
 
+## Installation
+
+For compilation of the tex files, 
+[amivtex](https://github.com/NotSpecial/amivtex) needs to be installed.
+
+
+# OLD STUFF
+
 Simple tool to create amiv kontakt contracts from CRM
 
 This app uses the [suds fork by jurko](https://bitbucket.org/jurko/suds) to
