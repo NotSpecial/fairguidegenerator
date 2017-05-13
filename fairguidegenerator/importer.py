@@ -1,6 +1,28 @@
 """Get data from AMIV CRM."""
-
+from os import path, makedirs
+import requests
+from flask import current_app
 from amivcrm import AMIVCRM
+
+
+LOGO_URL = 'http://www.kontakt.amiv.ethz.ch/data/company-logos/2016/'
+AD_URL = 'http://www.kontakt.amiv.ethz.ch/data/company-inserat/'
+
+
+def _download(url, filename):
+    """Download image, return path to file (or None if not found.)"""
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        directory = current_app.config['STORAGE_DIR']
+        makedirs(directory, exist_ok=True)
+        filepath = path.join(directory, filename)
+
+        with open(filepath, 'wb') as file:
+            for chunk in response:
+                file.write(chunk)
+
+        return filepath
+
 
 class Importer(AMIVCRM):
     """Wrapper around CRM class to provide some data parsing."""
@@ -21,6 +43,8 @@ class Importer(AMIVCRM):
 
     def get_company(self, company_id):
         """Get and parse data from AMIV CRM for a single company.
+
+        Also try to download image and logo
 
         Args:
             id (str): The id of the company
@@ -49,14 +73,13 @@ class Importer(AMIVCRM):
 
             # Text
             'about_us11_c',
-            'our_industries11_c'
+            'our_industries11_c',
+
+            # Media packet: Do they have an ad?,
+            'mediapaket_c',
         ]
 
-        result = self.getentry(
-            module_name="Accounts",
-            query="accounts.id = '%s'" % company_id,
-            order_by="accounts.name",
-            select_fields=fields)
+        result = self.getentry("Accounts", company_id, select_fields=fields)
 
         if result is not None:
             def _parse_list(raw):
@@ -82,5 +105,19 @@ class Importer(AMIVCRM):
                 'about': result['about_us11_c'],
                 'focus': result['our_industries11_c']
             }
+            # For Logos and Ads, we have to check the kontakt webserver.
+            # They are stored with the company name (spaces replaced with _)
+            key = parsed['name'].replace(' ', '_')
+
+            # Try to retrieve Logo (None if nothing found)
+            parsed['logo'] = (
+                _download(LOGO_URL + key + '.png', 'logo_%s' % key) or
+                _download(LOGO_URL + key + '.jpeg', 'logo_%s' % key)
+            )
+
+            # If media, try to retrieve advertisement as well
+            parsed['media'] = (result['mediapaket_c'] == "mediaPaket")
+            if parsed['media']:
+                parsed['ad'] = _download(AD_URL + key + '.pdf', 'ad_%s' %key)
 
             return parsed

@@ -1,28 +1,17 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=C0103
+# pylint: disable=locally-disabled, invalid-name
 
 """The app."""
-
-# from os import path
-# from ruamel import yaml
-
 from flask import (Flask, send_file, url_for, abort)
 
 from fairguidegenerator.tex import render_tex
 from fairguidegenerator.importer import Importer
 
-# Find the directory where the script is placed
-# root_dir = path.dirname(path.realpath(__file__))
-
 app = Flask('fairguidegenerator')
 app.config.from_object('config')
 
-
 # Get CRM connection
 CRM = Importer(app.config['SOAP_USERNAME'], app.config['SOAP_PASSWORD'])
-
-from pprint import pprint
-pprint(CRM.get_companies())
 
 # Routes
 @app.route('/')
