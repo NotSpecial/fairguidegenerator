@@ -84,6 +84,8 @@ class Importer(AMIVCRM):
         if result is not None:
             def _parse_list(raw):
                 """CRM Format is ^something^,^otherthing^,.."""
+                if raw is None:
+                    return ""
                 return [item[1:-1] for item in raw.split(",")]
 
             parsed = {
@@ -97,27 +99,35 @@ class Importer(AMIVCRM):
 
                 'contact': result['study_contact11_c'],
 
-                'employees_ch': result['employees_ch11_c'],
-                'employees_world': result['employees_world11_c'],
-
                 'offering': _parse_list(result['job_offer11_c']),
 
                 'about': result['about_us11_c'],
                 'focus': result['our_industries11_c']
             }
+            # Employees
+            swiss = result['employees_ch11_c']
+            swiss = "%s in der Schweiz" % swiss if swiss else ""
+            world = result['employees_world11_c']
+            world = "%s weltweit" % world if world else ""
+
+            parsed['employees'] = '\n'.join([swiss, world])
+
+
             # For Logos and Ads, we have to check the kontakt webserver.
             # They are stored with the company name (spaces replaced with _)
             key = parsed['name'].replace(' ', '_')
 
             # Try to retrieve Logo (None if nothing found)
             parsed['logo'] = (
-                _download(LOGO_URL + key + '.png', 'logo_%s' % key) or
-                _download(LOGO_URL + key + '.jpeg', 'logo_%s' % key)
+                _download(LOGO_URL + key + '.png', 'logo_%s.png' % key) or
+                _download(LOGO_URL + key + '.jpeg', 'logo_%s.jpeg' % key)
             )
 
             # If media, try to retrieve advertisement as well
+            # Note: for pdfs, it seems important to include the file ending
             parsed['media'] = (result['mediapaket_c'] == "mediaPaket")
             if parsed['media']:
-                parsed['ad'] = _download(AD_URL + key + '.pdf', 'ad_%s' %key)
+                parsed['ad'] = _download(AD_URL + key + '.pdf',
+                                         'ad_%s.pdf' %key)
 
             return parsed
