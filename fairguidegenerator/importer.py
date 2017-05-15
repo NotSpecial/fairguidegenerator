@@ -33,14 +33,16 @@ def _download(base_url, company_name, extension):
         # Prepare directory
         directory = current_app.config['STORAGE_DIR']
         makedirs(directory, exist_ok=True)
+        # Weird Problems with utf-8 filenames on some systems
+        escaped = company_name.encode('ascii', 'ignore').decode('ascii')
 
         if extension in ('jpeg', 'png'):
-            filepath = path.join(directory, 'logo_%s.png' % company_name)
+            filepath = path.join(directory, 'logo_%s.png' % escaped)
             logo = Image.open(BytesIO(response.content))
             # We need to ensure the color-space used is supported by png
             logo.convert('RGBA').save(filepath)
         else:
-            filepath = path.join(directory, 'ad_%s.pdf' % company_name)
+            filepath = path.join(directory, 'ad_%s.pdf' % escaped)
             with open(filepath, 'wb') as file:
                 for chunk in response:
                     file.write(chunk)
