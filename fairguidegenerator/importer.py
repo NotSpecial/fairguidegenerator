@@ -41,6 +41,9 @@ def _download(base_url, company_name, extension):
             logo.convert('RGBA').save(filepath)
         else:
             filepath = path.join(directory, 'ad_%s.pdf' % company_name)
+            with open(filepath, 'wb') as file:
+                for chunk in response:
+                    file.write(chunk)
 
         return filepath
 
