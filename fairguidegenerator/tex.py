@@ -93,6 +93,6 @@ def render_tex(companies, output_dir):
 
     # Clean up
     for ending in ['.tex', '.aux', '.log']:
-        pass  # os.remove('%s%s' % (filename, ending))
+        os.remove('%s%s' % (filename, ending))
 
     return filename + '.pdf'
