@@ -1,25 +1,46 @@
 """Get data from AMIV CRM."""
 from os import path, makedirs
+from io import BytesIO
+from PIL import Image
 import requests
 from flask import current_app
 from amivcrm import AMIVCRM
 
+# Download URLs
+LOGO_URL = 'http://www.kontakt.amiv.ethz.ch/data/company-logos/2016'
+AD_URL = 'http://www.kontakt.amiv.ethz.ch/data/company-inserat'
 
-LOGO_URL = 'http://www.kontakt.amiv.ethz.ch/data/company-logos/2016/'
-AD_URL = 'http://www.kontakt.amiv.ethz.ch/data/company-inserat/'
+# Paths to placeholder logo/ad
+BASEPATH = path.join(path.dirname(path.abspath(__file__)), 'tex_templates')
+LOGO_MISSING = path.join(BASEPATH, 'logo_missing.png')
+AD_MISSING = path.join(BASEPATH, 'ad_missing.png')
+AD_AD = path.join(BASEPATH, 'ad_ad.png')
 
 
-def _download(url, filename):
-    """Download image, return path to file (or None if not found.)"""
+def _download(base_url, company_name, extension):
+    """Download Logo or Ad.
+
+    Logo files (jpeg and png) are converted and saved with pillow to ensure
+    that all metadata is present, since TeX relies on this.
+    (And sometimes the files on the server don't include it)
+
+    Ads (pdf) are directly saved to disk
+    """
+    assert extension in ('png', 'jpeg', 'pdf')
+    url = '%s/%s.%s' % (base_url, company_name, extension)
     response = requests.get(url, stream=True)
     if response.status_code == 200:
+        # Prepare directory
         directory = current_app.config['STORAGE_DIR']
         makedirs(directory, exist_ok=True)
-        filepath = path.join(directory, filename)
 
-        with open(filepath, 'wb') as file:
-            for chunk in response:
-                file.write(chunk)
+        if extension in ('jpeg', 'png'):
+            filepath = path.join(directory, 'logo_%s.png' % company_name)
+            logo = Image.open(BytesIO(response.content))
+            # We need to ensure the color-space used is supported by png
+            logo.convert('RGBA').save(filepath)
+        else:
+            filepath = path.join(directory, 'ad_%s.pdf' % company_name)
 
         return filepath
 
@@ -117,17 +138,19 @@ class Importer(AMIVCRM):
             # They are stored with the company name (spaces replaced with _)
             key = parsed['name'].replace(' ', '_')
 
-            # Try to retrieve Logo (None if nothing found)
+            # Try to retrieve Logo (path to placeholder logo if not found)
             parsed['logo'] = (
-                _download(LOGO_URL + key + '.png', 'logo_%s.png' % key) or
-                _download(LOGO_URL + key + '.jpeg', 'logo_%s.jpeg' % key)
+                _download(LOGO_URL, key, 'png') or
+                _download(LOGO_URL, key, 'jpeg') or
+                LOGO_MISSING
             )
 
             # If media, try to retrieve advertisement as well
             # Note: for pdfs, it seems important to include the file ending
             parsed['media'] = (result['mediapaket_c'] == "mediaPaket")
             if parsed['media']:
-                parsed['ad'] = _download(AD_URL + key + '.pdf',
-                                         'ad_%s.pdf' %key)
+                parsed['ad'] = _download(AD_URL, key, 'pdf') or AD_MISSING
+            else:
+                parsed['ad'] = AD_AD  # Insert placeholder promoting an ad
 
             return parsed

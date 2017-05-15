@@ -12,43 +12,31 @@ Some adjustments were made:
 The render_tex function takes care of filename and directory things.
 It plugs everything into the template and can return either the .tex file or
 start latex and return the .pdf (also removes all non .pdf files)
-
-Important note on date output:
-
-The filter will use the %A option in date formatting. This will set the week-
-day depending on the locale. So make sure to actually set the locale to
-something german so it fits the rest of the contract. Example:
-
->>> import locale
->>> locale.setlocale(locale.LC_TIME, "de_CH.UTF-8")
-
-Done! (This is not done automatically since available locales are not
-guaranteed)
-
-
 """
-
-from jinja2 import Environment, PackageLoader, StrictUndefined
 import subprocess
 import os
 import re
+from jinja2 import Environment, PackageLoader, StrictUndefined
 
 # Create the jinja env
-texenv = Environment(
-    loader=PackageLoader('fairguidegenerator', 'tex_templates'))
-texenv.block_start_string = '((*'
-texenv.block_end_string = '*))'
-texenv.variable_start_string = '((('
-texenv.variable_end_string = ')))'
-texenv.comment_start_string = '((='
-texenv.comment_end_string = '=))'
-texenv.undefined = StrictUndefined
-texenv.trim_blocks = True
+env = Environment(
+    loader=PackageLoader('fairguidegenerator', 'tex_templates'),
+    block_start_string='((*',
+    block_end_string='*))',
+    variable_start_string='(((',
+    variable_end_string=')))',
+    comment_start_string='((=',
+    comment_end_string='=))',
+    undefined=StrictUndefined,
+    trim_blocks=True,
+)
 
 
 # Add additional filters
 def escape_tex(value):
     """Regex for most tex relevant things."""
+    if not isinstance(value, str):
+        return value
     subs = (
         (re.compile(r'\\'), r'\\textbackslash'),
         (re.compile(r'([{}_#%&$])'), r'\\\1'),
@@ -57,41 +45,43 @@ def escape_tex(value):
         (re.compile(r'"'), r"''"),
         (re.compile(r'\.\.\.+'), r'\\ldots'),
     )
-
-    newval = value
     for pattern, replacement in subs:
-        newval = pattern.sub(replacement, newval)
-    return newval
+        value = pattern.sub(replacement, value)
 
-texenv.filters.update({
+    # Replace newlines
+    value = value.replace('\n', r'\\')
+
+    return value
+
+env.filters.update({
     # Escaping for tex, short name because used often
-    'l': escape_tex,
-
-    # Escape newline
-    'newline': lambda x: x.replace('\n', r'\\'),
+    't': escape_tex,
 })
 
-
-template = texenv.get_template("company_page.tex")
-
-
-def render_tex(output_dir, **companydata):
+def render_tex(companies, output_dir):
     """Render the template and return the filename.
 
     Returns:
         str: filename (including path) to output
     """
     # Render the template
-    rendered = template.render(**companydata)
+    template = env.get_template("company_page.tex")
+    rendered = template.render(companies=companies)
 
     # Create filenames and directory (if needed)
-    filename = os.path.join(output_dir, companydata['name'])
+    # Tex is stupid with spaces in filename, replace them
+    if len(list(companies)) == 1:
+        name = companies[0]['name'].replace(' ', '_')
+    else:
+        name = 'all'
+
+    filename = os.path.join(output_dir, name)
     texname = filename + '.tex'
 
     os.makedirs(output_dir, exist_ok=True)
 
-    with open(texname, 'wb') as f:
-        f.write(rendered.encode('utf-8'))
+    with open(texname, 'wb') as file:
+        file.write(rendered.encode('utf-8'))
 
     commands = ["xelatex",
                 "-output-directory", output_dir,
@@ -103,6 +93,6 @@ def render_tex(output_dir, **companydata):
 
     # Clean up
     for ending in ['.tex', '.aux', '.log']:
-        os.remove('%s%s' % (filename, ending))
+        pass  # os.remove('%s%s' % (filename, ending))
 
     return filename + '.pdf'

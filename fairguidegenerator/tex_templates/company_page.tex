@@ -1,27 +1,36 @@
 \documentclass{amivbooklet}
 
+% Start on even page for preview
+\usepackage[2-]{pagesel}
+
+% Add text indicating preview to footer
+% \fancyfoot[EL]{Vorschau Links / Preview Left}
+% \fancyfoot[OL]{Vorschau Rechts / Preview Right}
+
 \begin{document}
+% Placeholder for first (odd) page, which wil be skipped
+\hbox{}\newpage
 
-\name{((( name )))}
-\website{((( website )))}
-\booth{((( booth )))}
-\logo{demo_logo.png}
+((* for company in companies *))
+\name{((( company.name|t )))}
+\website{((( company.website|t )))}
+\booth{((( company.booth|t )))}
+\logo{((( company.logo )))}
 \boxes{%
-    ((* if 'ITET' in interested_in *))\itet((* endif *))
-    ((* if 'MAVT' in interested_in *))\mavt((* endif *))
-    ((* if 'MTEC' in interested_in *))\mtec((* endif *))
+    ((* if 'ITET' in company.interested_in *))\itet((* endif *))
+    ((* if 'MAVT' in company.interested_in *))\mavt((* endif *))
+    ((* if 'MTEC' in company.interested_in *))\mtec((* endif *))
 }
-\contact{((( contact|newline )))}
-\employees{%
-    ((( employees_ch ))) in der Schweiz\\
-    ((( employees_world ))) in der Welt%
-}
-\offers{((( "\\".join(offering) )))}
-\about{((( about|l|newline )))}
-\focus{((( focus|l|newline )))}
+\contact{((( company.contact|t )))}
+\employees{((( company.employees|t )))}
+\offers{((( "\n".join(company.offering)|t )))}
+\about{((( company.about|t )))}
+\focus{((( company.focus|t )))}
 
-% Demo left side
-\companypage
-% Demo right side
-\companypage
+% Even and Odd preview
+\companywithadleft{(((company.ad)))}
+\companywithadright{(((company.ad)))}
+
+((* endfor *))
+
 \end{document}
