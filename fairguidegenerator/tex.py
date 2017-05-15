@@ -14,6 +14,7 @@ It plugs everything into the template and can return either the .tex file or
 start latex and return the .pdf (also removes all non .pdf files)
 """
 import subprocess
+import contextlib
 import os
 import re
 from jinja2 import Environment, PackageLoader, StrictUndefined
@@ -92,7 +93,8 @@ def render_tex(companies, output_dir):
     subprocess.run(commands, stdout=subprocess.PIPE, check=True)
 
     # Clean up
-    for ending in ['.tex', '.aux', '.log']:
-        os.remove('%s%s' % (filename, ending))
+    with contextlib.suppress(FileNotFoundError):
+        for ending in ['.tex', '.aux', '.log']:
+            os.remove('%s%s' % (filename, ending))
 
     return filename + '.pdf'
