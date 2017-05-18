@@ -20,29 +20,27 @@ AD_AD = path.join(BASEPATH, 'ad_ad.png')
 def _download(base_url, company_name, extension):
     """Download Logo or Ad.
 
-    Logo files (jpeg and png) are converted and saved with pillow to ensure
+    PNGs are converted and saved with pillow to ensure
     that all metadata is present, since TeX relies on this.
     (And sometimes the files on the server don't include it)
 
-    Ads (pdf) are directly saved to disk
+    PDFS are directly saved to disk.
     """
-    assert extension in ('png', 'jpeg', 'pdf')
+    assert extension in ('png', 'pdf')
     url = '%s/%s.%s' % (base_url, company_name, extension)
     response = requests.get(url, stream=True)
     if response.status_code == 200:
         # Prepare directory
         directory = current_app.config['STORAGE_DIR']
         makedirs(directory, exist_ok=True)
-        # Weird Problems with utf-8 filenames on some systems
-        escaped = company_name.encode('ascii', 'ignore').decode('ascii')
 
-        if extension in ('jpeg', 'png'):
-            filepath = path.join(directory, 'logo_%s.png' % escaped)
+        if extension == 'png':
+            filepath = path.join(directory, 'logo_%s.png' % company_name)
             logo = Image.open(BytesIO(response.content))
             # We need to ensure the color-space used is supported by png
             logo.convert('RGBA').save(filepath)
         else:
-            filepath = path.join(directory, 'ad_%s.pdf' % escaped)
+            filepath = path.join(directory, 'ad_%s.pdf' % company_name)
             with open(filepath, 'wb') as file:
                 for chunk in response:
                     file.write(chunk)
@@ -138,17 +136,12 @@ class Importer(AMIVCRM):
 
             parsed['employees'] = '\n'.join([swiss, world])
 
-
             # For Logos and Ads, we have to check the kontakt webserver.
             # They are stored with the company name (spaces replaced with _)
             key = parsed['name'].replace(' ', '_')
 
             # Try to retrieve Logo (path to placeholder logo if not found)
-            parsed['logo'] = (
-                _download(LOGO_URL, key, 'png') or
-                _download(LOGO_URL, key, 'jpeg') or
-                LOGO_MISSING
-            )
+            parsed['logo'] = _download(LOGO_URL, key, 'png') or LOGO_MISSING
 
             # If media, try to retrieve advertisement as well
             # Note: for pdfs, it seems important to include the file ending
