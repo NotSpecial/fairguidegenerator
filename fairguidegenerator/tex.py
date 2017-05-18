@@ -14,10 +14,15 @@ It plugs everything into the template and can return either the .tex file or
 start latex and return the .pdf (also removes all non .pdf files)
 """
 import subprocess
-import contextlib
-import os
+from os import path
 import re
+from tempfile import TemporaryDirectory
 from jinja2 import Environment, PackageLoader, StrictUndefined
+
+
+class Error(Exception):
+    """Custom Error."""
+
 
 # Create the jinja env
 env = Environment(
@@ -54,12 +59,14 @@ def escape_tex(value):
 
     return value
 
+
 env.filters.update({
     # Escaping for tex, short name because used often
     't': escape_tex,
 })
 
-def render_tex(companies, output_dir):
+
+def render_tex(companies):
     """Render the template and return the filename.
 
     Returns:
@@ -69,32 +76,35 @@ def render_tex(companies, output_dir):
     template = env.get_template("company_page.tex")
     rendered = template.render(companies=companies)
 
-    # Create filenames and directory (if needed)
-    # Tex is stupid with spaces in filename, replace them
-    if len(list(companies)) == 1:
-        name = companies[0]['name'].replace(' ', '_')
-    else:
-        name = 'all'
+    with TemporaryDirectory() as tempdir:
+        # Safe .tex file
+        texfile = path.join(tempdir, 'temp.tex')
 
-    filename = os.path.join(output_dir, name)
-    texname = filename + '.tex'
+        with open(texfile, 'wb') as file:
+            file.write(rendered.encode('utf-8'))
 
-    os.makedirs(output_dir, exist_ok=True)
+        # Run XeLaTeX
+        commands = ["xelatex",
+                    "-output-directory", tempdir,
+                    "-interaction=batchmode", texfile]
 
-    with open(texname, 'wb') as file:
-        file.write(rendered.encode('utf-8'))
+        try:
+            subprocess.check_output(commands)
+        except FileNotFoundError:
+            # The command was not recognized
+            raise Error("The command '%s' failed. Is everything installed?"
+                        % commands[0])
+        except subprocess.CalledProcessError as e:
+            # Try to return tex log in error message
+            try:
+                with open(path.join(tempdir, 'temp.log'), 'r') as file:
+                    log = file.read()
+                raise Error("Something went wrong during compilation!\n"
+                            "Here is the log content:\n\n %s" % log)
+            except FileNotFoundError:
+                # No log! Show output of command instead
+                raise Error(e.output.decode('utf-8'))
 
-    commands = ["xelatex",
-                "-output-directory", output_dir,
-                "-interaction=batchmode", texname]
-
-    # Capture output with PIPE (just to keep console clean)
-    # Check true requires status code 0
-    subprocess.run(commands, stdout=subprocess.PIPE, check=True)
-
-    # Clean up
-    with contextlib.suppress(FileNotFoundError):
-        for ending in ['.tex', '.aux', '.log']:
-            os.remove('%s%s' % (filename, ending))
-
-    return filename + '.pdf'
+        # Return content of pdf so all files can be removed
+        with open(path.join(tempdir, 'temp.pdf'), 'rb') as file:
+            return file.read()
