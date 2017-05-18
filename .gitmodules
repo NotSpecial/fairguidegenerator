@@ -1,0 +1,3 @@
+[submodule "amivtex"]
+	path = amivtex
+	url = git@github.com:NotSpecial/amivtex.git
