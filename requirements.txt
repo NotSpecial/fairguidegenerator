@@ -6,4 +6,4 @@ requests==2.10.0
 suds-jurko==0.6
 Werkzeug==0.11.10
 amivcrm==0.1
-Pillow=4.1.1
+Pillow==4.1.1
