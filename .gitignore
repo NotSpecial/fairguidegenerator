@@ -1,3 +1,7 @@
+# Don't include config and DINPro (its not free)
+DINPro/
+config.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
