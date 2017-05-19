@@ -1,54 +1,58 @@
-# Contractor
+# Fairguidegenerator
 
-## Installation
+A tool to create AMIV Kontakt fairguide pages for companies.
 
-For compilation of the tex files, 
-[amivtex](https://github.com/NotSpecial/amivtex) needs to be installed.
+## Deployment
 
+A `Dockerfile` is available, but two things are needed before it can be built:
 
-# OLD STUFF
+1. You have to get the DINPro font (it is not free, but available for ETH
+   members) and place it next to the Dockerfile. Name the folder `DINPro`.
+2. Also next to the Dockerfile, create a config file named `config.py` with the
+   following content:
 
-Simple tool to create amiv kontakt contracts from CRM
+   ```python
+   SOAP_USERNAME = 'username for amiv crm soap'
+   SOAP_PASSWORD = 'and the password'
+   ```
 
-This app uses the [suds fork by jurko](https://bitbucket.org/jurko/suds) to
-connect to the AMIV sugarCRM with SOAP.
+   You can find the credentials in the [AMIV Wiki](https://github.com/NotSpecial/amivcrm/blob/master/intern.amiv.ethz.ch/wiki/SugarCRM#SOAP).
 
-It this data to fill jinja2 templates which are then passed to latex.
+If thats done, you can build and run the container:
 
-*Important:* The amiv tex package needs a quite new version of latex, you can
-run the tests to make sure everything compiles.
-
-The interface itself is based on [flask](flask.pocoo.org) and uses 
-[flask-wtforms](flask-wtf.readthedocs.org) and 
-[bootstrap v4](v4-alpha.getbootstrap.com)
-
-## Setup
-
-Before you can run anything, you need to create a user config and storage
-directories.
-
-You can simply call
-
-```
-python init.py
+```bash
+docker build -t fairguidegenerator .
+# Run on port 9876 (choose whatever you like)
+docker run -p 9876:80 fairguidegenerator
 ```
 
-and this will be taken care of. You also need to input a locale that works on 
-your system. It is important that the locale provides german weekdays, or else
-the contracts will look bad.
+Done!
 
-## Testing
+## Development
 
-There are some tests implemented, especially for tex creation and soap
-connection. Use `py.test` to run them.
+For compilation of the tex files,
+[amivtex](https://github.com/NotSpecial/amivtex) needs to be installed along
+with the DINPro fonts as well. Take a look the repository for instructions.
 
+You need Python 3. The following commands create a virtual environment and
+install dependencies:
+
+```bash
+# (If not yet done: clone and go into folder)
+git clone https://github.com/NotSpecial/fairguidegenerator
+cd fairguidegenerator
+
+# Create and activate env
+python -m venv env
+source env/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run development server
+export FLASK_APP=app.py
+export FLASK_DEBUG=1
+flask run
 ```
-> pip install pytest
-> py.test
-```
 
-The tests musst be run from the root directory (where the amivtex dir is) or 
-the tex tests won't be able to find the .tex source.
-
-*Beware:* The tex test tries a **lot** of choices and takes a lot of time to
-finish!
+Now you should be set up for development.
