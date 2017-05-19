@@ -2,7 +2,16 @@
 
 A tool to create AMIV Kontakt fairguide pages for companies.
 
-## Deployment
+## Deployment with Docker
+
+When cloning the repository, don't forget the `--recursive` option to include
+the amivtex submodule
+
+```bash
+git clone --recursive https://github.com/NotSpecial/fairguidegenerator.git
+# If you have already cloned the repo, use this command to get the submodule:
+git submodule update --init --recursive
+```
 
 A `Dockerfile` is available, but two things are needed before it can be built:
 
