@@ -25,7 +25,8 @@ A `Dockerfile` is available, but two things are needed before it can be built:
    SOAP_PASSWORD = 'and the password'
    ```
 
-   You can find the credentials in the [AMIV Wiki](https://github.com/NotSpecial/amivcrm/blob/master/intern.amiv.ethz.ch/wiki/SugarCRM#SOAP).
+   You can find the credentials in the
+   [AMIV Wiki](https://intern.amiv.ethz.ch/wiki/SugarCRM#SOAP).
 
 If thats done, you can build and run the container:
 
