@@ -20,12 +20,21 @@
     ((* if 'ITET' in company.interested_in *))\itet((* endif *))
     ((* if 'MAVT' in company.interested_in *))\mavt((* endif *))
     ((* if 'MTEC' in company.interested_in *))\mtec((* endif *))
+    ((* if 'fulltime' in company.offers *))
+    \fulltimeoffer{((( company.offers.fulltime|t )))}
+    ((* endif *))
+    ((* if 'entry' in company.offers *))
+    \entryoffer{((( company.offers.entry|t )))}
+    ((* endif *))
+    ((* if 'thesis' in company.offers *))
+    \thesisoffer{((( company.offers.thesis|t )))}
+    ((* endif *))
 }
-\contact{((( company.contact|t )))}
+\contact{((( company.contact.rstrip()|t  if company.contact else '' )))}
+
 \employees{((( company.employees|t )))}
-\offers{((( "\n".join(company.offering)|t )))}
-\about{((( company.about|t )))}
-\focus{((( company.focus|t )))}
+\about{((( company.about.rstrip()|t if company.about else '' )))}
+\focus{((( company.focus.rstrip()|t if company.focus else '' )))}
 
 % Even and Odd preview
 \companywithadleft{(((company.ad)))}

@@ -112,6 +112,34 @@ class Importer(AMIVCRM):
                     return ""
                 return [item[1:-1] for item in raw.split(",")]
 
+            def _parse_offering(raw):
+                """Split offers in three blocks (fulltime, entry, thesis)"""
+                # Remove the 'arbeiten' part from Semesterarbeiten etc.
+                all_offers = _parse_list(raw)
+
+                offers = {}
+                if 'Festanstellungen' in all_offers:
+                    offers['fulltime'] = 'Festanstellungen'
+
+                entry_offers = [item for item in all_offers
+                                if item in ['Praktika', 'TraineeProgramm']]
+                if entry_offers:
+                    offers['entry'] = '\n'.join(entry_offers)
+
+                thesis_offers = list(
+                    item for item in ['Semester', 'Bachelor', 'Master']
+                    if "%sarbeiten" % item in all_offers
+                )
+                # If more then one item, put last on newline
+                if len(thesis_offers) > 1:
+                    thesis_offers[-1] = "\n%s" % thesis_offers[-1]
+
+                # Join them with kommas and write 'arbeiten' after the last one
+                if thesis_offers:
+                    offers['thesis'] = "%sarbeiten" % ', '.join(thesis_offers)
+
+                return offers
+
             parsed = {
                 'id': result['id'],
 
@@ -123,18 +151,18 @@ class Importer(AMIVCRM):
 
                 'contact': result['study_contact11_c'],
 
-                'offering': _parse_list(result['job_offer11_c']),
+                'offers': _parse_offering(result['job_offer11_c']),
 
                 'about': result['about_us11_c'],
                 'focus': result['our_industries11_c']
             }
             # Employees
             swiss = result['employees_ch11_c']
-            swiss = "%s in der Schweiz" % swiss if swiss else ""
+            swiss = "%s Mitarbeiter in der Schweiz" % swiss if swiss else ""
             world = result['employees_world11_c']
-            world = "%s weltweit" % world if world else ""
+            world = "%s Mitarbeiter weltweit" % world if world else ""
 
-            parsed['employees'] = '\n'.join([swiss, world])
+            parsed['employees'] = '\n'.join(filter(None, [swiss, world]))
 
             # For Logos and Ads, we have to check the kontakt webserver.
             # They are stored with the company name (spaces replaced with _)
