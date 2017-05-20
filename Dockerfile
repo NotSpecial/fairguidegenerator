@@ -1,10 +1,10 @@
-# Use an official Python runtime as a base image
-FROM python:3.6
+# Use Arch linux as base because we need up to date version of TexLive+Python
+FROM dock0/arch_full
 
-## Tex Setup
+# Get Texlive and python
+RUN pacman -Sy --noconfirm texlive-most python python-pip
 
-# Install TeXLive and XeTeX
-RUN apt-get update && apt-get install -y texlive texlive-xetex
+## TeX Setup
 
 # Set HOME so we can use a local TEXMF tree and fonts
 ENV HOME /
