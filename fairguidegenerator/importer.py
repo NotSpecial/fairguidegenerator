@@ -1,6 +1,7 @@
 """Get data from AMIV CRM."""
 from os import path, makedirs
 from io import BytesIO
+import re
 from PIL import Image
 import requests
 from flask import current_app
@@ -156,12 +157,14 @@ class Importer(AMIVCRM):
                 'about': result['about_us11_c'],
                 'focus': result['our_industries11_c']
             }
-            # Employees
-            swiss = result['employees_ch11_c']
-            swiss = "%s Mitarbeiter in der Schweiz" % swiss if swiss else ""
-            world = result['employees_world11_c']
-            world = "%s Mitarbeiter weltweit" % world if world else ""
 
+            # Employees
+            def _parse_employees(key, suffix):
+                num = re.sub("\D", "", str(result[key]))  # Only numbers
+                return "%s Mitarbeiter %s" % (num, suffix) if num else None
+
+            swiss = _parse_employees('employees_ch11_c', 'in der Schweiz')
+            world = _parse_employees('employees_world11_c', 'weltweit')
             parsed['employees'] = '\n'.join(filter(None, [swiss, world]))
 
             # For Logos and Ads, we have to check the kontakt webserver.
@@ -172,7 +175,6 @@ class Importer(AMIVCRM):
             parsed['logo'] = _download(LOGO_URL, key, 'png') or LOGO_MISSING
 
             # If media, try to retrieve advertisement as well
-            # Note: for pdfs, it seems important to include the file ending
             parsed['media'] = (result['mediapaket_c'] == "mediaPaket")
             if parsed['media']:
                 parsed['ad'] = _download(AD_URL, key, 'pdf') or AD_MISSING
