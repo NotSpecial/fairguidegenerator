@@ -20,18 +20,6 @@ CRM = Importer(app.config['SOAP_USERNAME'], app.config['SOAP_PASSWORD'])
 
 
 # Routes
-@app.route('/')
-def main():
-    """Main view. Show links to companies."""
-    def _link(item):
-        url = url_for('companypage', company_id=item[1])
-        return "<a href=%s>%s</a>" % (url, item[0])
-
-    # Super simple demo
-    companies = CRM.get_companies()
-    return "<br>".join(_link(item) for item in companies.items())
-
-
 @app.route('/<company_id>')
 def companypage(company_id):
     """Return the rendered page for a single company."""
@@ -45,6 +33,18 @@ def companypage(company_id):
 
     # Specify mimetype so browsers open it in preview
     return send_file(BytesIO(compiled), mimetype='application/pdf')
+
+
+@app.route('/list')
+def list_companies():
+    """Main view. Show links to companies."""
+    def _link(item):
+        url = url_for('companypage', company_id=item[1])
+        return "<a href=%s>%s</a>" % (url, item[0])
+
+    # Super simple demo
+    companies = CRM.get_companies()
+    return "<br>".join(_link(item) for item in companies.items())
 
 
 @app.route('/all')
