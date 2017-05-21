@@ -161,7 +161,9 @@ class Importer(AMIVCRM):
             # Employees
             def _parse_employees(key, suffix):
                 num = re.sub("\D", "", str(result[key]))  # Only numbers
-                return "%s Mitarbeiter %s" % (num, suffix) if num else None
+                # Add comma separators for thousands
+                if num:
+                    return "{:,} Mitarbeiter {}".format(int(num), suffix)
 
             swiss = _parse_employees('employees_ch11_c', 'in der Schweiz')
             world = _parse_employees('employees_world11_c', 'weltweit')
