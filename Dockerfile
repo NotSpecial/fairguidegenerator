@@ -1,8 +1,15 @@
 # Use Arch linux as base because we need up to date version of TexLive+Python
-FROM dock0/arch_full
+FROM dock0/arch
 
-# Get Texlive and python
-RUN pacman -Sy --noconfirm texlive-most python python-pip
+# Set locale to something with utf-8 to avoid problems with files in python
+ENV LANG=en_US.UTF-8
+
+# Get development tools to compile uwsgi, Texlive (we also need latexextra)
+# and python
+RUN pacman -Sy --noconfirm gcc \
+    texlive-core texlive-bin texlive-latexextra \
+    python python-pip
+
 
 ## TeX Setup
 
@@ -16,6 +23,7 @@ ADD amivtex /texmf/tex/latex/amivtex
 ADD DINPro /.fonts
 RUN fc-cache -f -v
 
+
 ## App Setup
 
 # Explicitly try to add config.py to get an error if its missing
@@ -28,6 +36,9 @@ RUN pip install -r requirements.txt
 
 # Copy the current directory contents into the container at /app
 ADD . /
+
+
+## uwsgi as entry point for the container
 
 # Expose port 80 for uwsgi
 EXPOSE 80
