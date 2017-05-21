@@ -97,8 +97,8 @@ def render_tex(companies):
         except subprocess.CalledProcessError as e:
             # Try to return tex log in error message
             try:
-                with open(path.join(tempdir, 'temp.log'), 'r') as file:
-                    log = file.read()
+                with open(path.join(tempdir, 'temp.log'), 'rb') as file:
+                    log = file.read().decode('utf-8')
                 raise Error("Something went wrong during compilation!\n"
                             "Here is the log content:\n\n %s" % log)
             except FileNotFoundError:
