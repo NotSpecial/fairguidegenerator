@@ -18,6 +18,38 @@ AD_MISSING = path.join(BASEPATH, 'ad_missing.png')
 AD_AD = path.join(BASEPATH, 'ad_ad.png')
 
 
+def _processed(logo):
+    """Remove transparencies because they sometimes cause problems.
+
+    Also re-scale the image if it is more then 2048px wide or high, since
+    Latex is not very good at this and produces ugly results.
+    """
+    converted = logo.convert('RGBA')
+
+    # Rescale if needed
+    MAX_SIZE = 2048
+    size = converted.size
+    print(size)
+
+    def _keep_ratio(a, b):
+        return int(round((MAX_SIZE/float(a)) * b))
+
+    if max(size) > MAX_SIZE:
+        if size[0] > size[1]:
+            new_width = MAX_SIZE
+            new_height = _keep_ratio(size[0], size[1])
+        else:
+            new_height = MAX_SIZE
+            new_width = _keep_ratio(size[1], size[0])
+
+        converted = converted.resize((new_width, new_height))
+
+    # Remove Transparencies
+    white_back = Image.new('RGB', converted.size, (255, 255, 255))
+    white_back.paste(converted, mask=converted.split()[-1])
+    return white_back
+
+
 def _download(base_url, company_name, extension):
     """Download Logo or Ad.
 
@@ -39,7 +71,7 @@ def _download(base_url, company_name, extension):
             filepath = path.join(directory, 'logo_%s.png' % company_name)
             logo = Image.open(BytesIO(response.content))
             # We need to ensure the color-space used is supported by png
-            logo.convert('RGBA').save(filepath)
+            _processed(logo).save(filepath)
         else:
             filepath = path.join(directory, 'ad_%s.pdf' % company_name)
             with open(filepath, 'wb') as file:
