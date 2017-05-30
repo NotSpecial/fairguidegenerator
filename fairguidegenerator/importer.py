@@ -29,7 +29,6 @@ def _processed(logo):
     # Rescale if needed
     MAX_SIZE = 2048
     size = converted.size
-    print(size)
 
     def _keep_ratio(a, b):
         return int(round((MAX_SIZE/float(a)) * b))
