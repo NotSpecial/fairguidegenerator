@@ -3,7 +3,7 @@
 
 """The app."""
 from io import BytesIO
-from flask import (Flask, send_file, url_for, abort)
+from flask import Flask, send_file, url_for, abort, make_response
 
 from fairguidegenerator.tex import render_tex
 from fairguidegenerator.importer import Importer
@@ -19,6 +19,20 @@ app.config.setdefault('STORAGE_DIR', './.cache')
 CRM = Importer(app.config['SOAP_USERNAME'], app.config['SOAP_PASSWORD'])
 
 
+def send(data):
+    """Send data as file with headers to disable caching.
+
+    We want the preview to be refreshed, so need to avoid browser caching.
+    """
+    response = make_response(send_file(BytesIO(data),
+                                       mimetype='application/pdf'))
+    # Use every kind of cache disabling there is^^
+    response.headers['Cache-Cont[rol'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = 0
+    return response
+
+
 # Routes
 @app.route('/<company_id>')
 def companypage(company_id):
@@ -32,7 +46,7 @@ def companypage(company_id):
     compiled = render_tex([companydata])
 
     # Specify mimetype so browsers open it in preview
-    return send_file(BytesIO(compiled), mimetype='application/pdf')
+    return send(compiled)
 
 
 @app.route('/list')
@@ -54,4 +68,4 @@ def all_companies():
                  for _id in CRM.get_companies().values())
 
     compiled = render_tex(companies)
-    return send_file(BytesIO(compiled), mimetype='application/pdf')
+    return send(compiled)
