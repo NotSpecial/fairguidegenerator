@@ -25,11 +25,9 @@ def send(data):
     We want the preview to be refreshed, so need to avoid browser caching.
     """
     response = make_response(send_file(BytesIO(data),
-                                       mimetype='application/pdf'))
-    # Use every kind of cache disabling there is^^
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = 0
+                                       mimetype='application/pdf',
+                                       cache_timeout=0))
+    response.headers['Content-Length'] = len(data)
     return response
 
 
