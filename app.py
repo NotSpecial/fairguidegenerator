@@ -27,7 +27,7 @@ def send(data):
     response = make_response(send_file(BytesIO(data),
                                        mimetype='application/pdf'))
     # Use every kind of cache disabling there is^^
-    response.headers['Cache-Cont[rol'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = 0
     return response
