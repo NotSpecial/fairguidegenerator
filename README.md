@@ -15,9 +15,7 @@ git submodule update --init --recursive
 
 A `Dockerfile` is available, but two things are needed before it can be built:
 
-1. You have to get the DINPro font (it is not free, but available for ETH
-   members) and place it next to the Dockerfile. Name the folder `DINPro`.
-2. Also next to the Dockerfile, create a config file named `config.py` with the
+1. Create a config file named `config.py` with the
    following content:
 
    ```python
@@ -28,10 +26,19 @@ A `Dockerfile` is available, but two things are needed before it can be built:
    You can find the credentials in the
    [AMIV Wiki](https://intern.amiv.ethz.ch/wiki/SugarCRM#SOAP).
 
-If thats done, you can build and run the container:
+2. You have to get the DINPro font (it is not free, but available for ETH
+   members). To ease this process, the Dockerfile takes the link to download
+   the fonts as `.tar.gz` as a `--build-arg`. You can find the direct link
+   in the [AMIV wiki](https://wiki.amiv.ethz.ch/Corporate_Design#DINPro)
+   as well.
+
+
+If you have got the link, you can build the container:
 
 ```bash
-docker build -t fairguidegenerator .
+docker build -t fairguidegenerator \
+	--build-arg FONT_LINK="https:wiki.amiv.ethz.ch/..." \
+	.
 # Run on port 9876 (choose whatever you like)
 docker run -p 9876:80 fairguidegenerator
 ```

@@ -11,31 +11,36 @@ RUN pacman -Sy --noconfirm gcc \
     python python-pip
 
 
-## TeX Setup
+## TeX and Font Setup
 
 # Set HOME so we can use a local TEXMF tree and fonts
 ENV HOME /
 
 # Add amivtex to local texmf tree
-ADD amivtex /texmf/tex/latex/amivtex
+COPY amivtex /texmf/tex/latex/amivtex
 
-# Add DINPro to local fonts and update font cache
-ADD DINPro /.fonts
+# Docker build arg: Link to download fonts as .tar.gz
+ARG FONT_LINK
+
+# Download and extract DINPro to local fonts and update font cache
+RUN mkdir /.fonts ; \
+	curl $FONT_LINK \
+	| tar -xzC /.fonts
 RUN fc-cache -f -v
 
 
 ## App Setup
 
 # Explicitly try to add config.py to get an error if its missing
-ADD config.py /config,py
+COPY config.py /config,py
 
 # Install uwsgi Python web server and app requirements
-ADD requirements.txt /requirements.txt
 RUN pip install uwsgi
+COPY requirements.txt /requirements.txt
 RUN pip install -r requirements.txt
 
 # Copy the current directory contents into the container at /app
-ADD . /
+COPY . /
 
 
 ## uwsgi as entry point for the container
