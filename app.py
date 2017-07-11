@@ -2,6 +2,7 @@
 # pylint: disable=locally-disabled, invalid-name
 
 """The app."""
+from os import environ
 from io import BytesIO
 from flask import Flask, send_file, url_for, abort, make_response
 
@@ -14,6 +15,10 @@ app.config.from_object('config')
 # If STORAGE_DIR has not been defined, use '.cache' in current working dir
 app.config.setdefault('STORAGE_DIR', './.cache')
 
+# Get SOAP username and password from envvar, if they are set
+for soapvar in ('SOAP_USERNAME', 'SOAP_PASSWORD'):
+    if soapvar in environ:
+        app.config[soapvar] = environ[soapvar]
 
 # Get CRM connection
 CRM = Importer(app.config['SOAP_USERNAME'], app.config['SOAP_PASSWORD'])

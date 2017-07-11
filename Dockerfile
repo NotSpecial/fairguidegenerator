@@ -31,9 +31,6 @@ RUN fc-cache -f -v
 
 ## App Setup
 
-# Explicitly try to add config.py to get an error if its missing
-COPY config.py /config,py
-
 # Install uwsgi Python web server and app requirements
 RUN pip install uwsgi
 COPY requirements.txt /requirements.txt
@@ -41,6 +38,15 @@ RUN pip install -r requirements.txt
 
 # Copy the current directory contents into the container at /app
 COPY . /
+
+
+## Configuration
+
+# Allow configuration to be specified by environment var or build arg
+ARG SOAP_USERNAME
+ENV SOAP_USERNAME $SOAP_USERNAME
+ARG SOAP_PASSWORD
+ENV SOAP_PASSWORD $SOAP_PASSWORD
 
 
 ## uwsgi as entry point for the container
