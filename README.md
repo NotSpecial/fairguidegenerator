@@ -61,10 +61,16 @@ source env/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Set credentials
+export SOAP_USERNAME=...
+export SOAP_PASSWORD=...
+
 # Run development server
 export FLASK_APP=app.py
 export FLASK_DEBUG=1
 flask run
 ```
 
-Now you are set up for development.
+Now all is set up for development.
+Instead of using environment vars, they can be put into a file named
+`config.py`.

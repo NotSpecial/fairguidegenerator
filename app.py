@@ -11,7 +11,12 @@ from fairguidegenerator.importer import Importer
 
 
 app = Flask('fairguidegenerator')
-app.config.from_object('config')
+
+# Try to load config from file
+try:
+    app.config.from_object('config')
+except ModuleNotFoundError:
+    pass
 # If STORAGE_DIR has not been defined, use '.cache' in current working dir
 app.config.setdefault('STORAGE_DIR', './.cache')
 
