@@ -72,5 +72,5 @@ flask run
 ```
 
 Now all is set up for development.
-Instead of using environment vars, they can be put into a file named
+Instead of using environment vars, the SOAP credentials can be put into a file named
 `config.py`.
