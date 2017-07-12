@@ -12,8 +12,8 @@ A `Dockerfile` is available, but two things are needed before it can be built:
 
 2. You have to get the DINPro font (it is not free, but available for ETH
    members). To ease this process, the Dockerfile takes the link to download
-   the fonts as `.tar.gz`. You can find the direct link
-   in the [AMIV wiki](https://wiki.amiv.ethz.ch/Corporate_Design#DINPro)
+   the fonts as `.tar.gz`. You can find a direct link
+   in the [AMIV Wiki](https://wiki.amiv.ethz.ch/Corporate_Design#DINPro)
    as well.
 
 
@@ -33,7 +33,7 @@ docker run -p 9876:80 fairguidegenerator
 
 Done!
 
-The SOAP Credentials do not need to be specified as build arguments,
+The SOAP Credentials do not need to be specified as build arguments:
 alternatively, they can be provided as environment variables.
 
 Finally, this can be automated, the important configuration option in the
@@ -44,7 +44,7 @@ docker compose file is `build`
 
 For compilation of the tex files,
 [amivtex](https://github.com/NotSpecial/amivtex) needs to be installed along
-with the DINPro fonts as well. Take a look the repository for instructions.
+with the DINPro fonts. Take a look the repository for instructions.
 
 You need Python 3. The following commands create a virtual environment and
 install dependencies:
@@ -67,4 +67,4 @@ export FLASK_DEBUG=1
 flask run
 ```
 
-Now you should be set up for development.
+Now you are set up for development.
