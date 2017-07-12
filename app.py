@@ -2,7 +2,7 @@
 # pylint: disable=locally-disabled, invalid-name
 
 """The app."""
-from os import environ
+from os import environ, getcwd, path
 from io import BytesIO
 from flask import Flask, send_file, url_for, abort, make_response
 
@@ -13,10 +13,8 @@ from fairguidegenerator.importer import Importer
 app = Flask('fairguidegenerator')
 
 # Try to load config from file
-try:
-    app.config.from_object('config')
-except ModuleNotFoundError:
-    pass
+app.config.from_pyfile(path.join(getcwd(), 'config.py'), silent=True)
+
 # If STORAGE_DIR has not been defined, use '.cache' in current working dir
 app.config.setdefault('STORAGE_DIR', './.cache')
 
