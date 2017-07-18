@@ -26,7 +26,7 @@ ARG FONT_LINK
 RUN mkdir /.fonts ; \
 	curl $FONT_LINK \
 	| tar -xzC /.fonts
-RUN fc-cache -f -v
+#RUN fc-cache -f -v
 
 
 ## App Setup

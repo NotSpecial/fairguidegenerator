@@ -33,11 +33,18 @@ docker run -p 9876:80 fairguidegenerator
 
 Done!
 
-The SOAP Credentials do not need to be specified as build arguments:
-alternatively, they can be provided as environment variables.
+The SOAP Credentials do not need to be specified as build arguments,
+there are two other approaches to separate them from the build:
 
-Finally, this can be automated, the important configuration option in the
-docker compose file is `build`
+1. Specify `SOAP_USERNAME` and `SOAP_PASSWORD` as environment variables.
+
+2. Define `SOAP_USERNAME` and `SOAP_PASSWORD` in a file `config.py`
+   (name of your choice)
+   and set the *absolute* path to the config file as the environment variable
+   `FAIRGUIDEGENERATOR_CONFIG`:
+
+Finally, building should be automated with compose,
+the important configuration option is `build`
 ([Check out the docs.](https://docs.docker.com/compose/compose-file/#build))
 
 ## Development

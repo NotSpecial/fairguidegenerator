@@ -2,7 +2,7 @@
 # pylint: disable=locally-disabled, invalid-name
 
 """The app."""
-from os import environ, getcwd, path
+from os import getenv
 from io import BytesIO
 from flask import Flask, send_file, url_for, abort, make_response
 
@@ -12,16 +12,12 @@ from fairguidegenerator.importer import Importer
 
 app = Flask('fairguidegenerator')
 
-# Try to load config from file
-app.config.from_pyfile(path.join(getcwd(), 'config.py'), silent=True)
+# Try to load config specified by envvar, default to config.py in home dir
+config_file = getenv("FAIRGUIDEGENERATOR_CONFIG", )
+app.config.from_pyfile(config_file)
 
 # If STORAGE_DIR has not been defined, use '.cache' in current working dir
 app.config.setdefault('STORAGE_DIR', './.cache')
-
-# Get SOAP username and password from envvar, if they are set
-for soapvar in ('SOAP_USERNAME', 'SOAP_PASSWORD'):
-    if soapvar in environ:
-        app.config[soapvar] = environ[soapvar]
 
 # Get CRM connection
 CRM = Importer(app.config['SOAP_USERNAME'], app.config['SOAP_PASSWORD'])
