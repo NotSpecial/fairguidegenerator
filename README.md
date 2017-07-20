@@ -2,50 +2,33 @@
 
 A tool to create AMIV Kontakt fairguide pages for companies.
 
-## Deployment with Docker
+## Configuration
 
-A `Dockerfile` is available, but two things are needed before it can be built:
+No matter how the fairguidegenerator is run, a config file is needed,
+which requires the following information:
 
 1. For the SugarCRM connection, username and password are required.
    Both can be found in the
    [AMIV Wiki](https://intern.amiv.ethz.ch/wiki/SugarCRM#SOAP).
 
 2. You have to get the DINPro font (it is not free, but available for ETH
-   members). To ease this process, the Dockerfile takes the link to download
-   the fonts as `.tar.gz`. You can find a direct link
-   in the [AMIV Wiki](https://wiki.amiv.ethz.ch/Corporate_Design#DINPro)
-   as well.
+   members). A direct link to download the fonts as `.tar.gz` is in the
+   [AMIV Wiki](https://wiki.amiv.ethz.ch/Corporate_Design#DINPro).
 
+Create the file, e.g. called `config.py`, and define the following variables:
 
-If you have got the link and credentials, you can build the container
-directly from github using `--build-arg`:
-
-```bash
-docker build -t fairguidegenerator \
-    --build-arg FONT_LINK="https://wiki.amiv.ethz.ch/..." \
-    --build-arg SOAP_USERNAME="..." \
-    --build-arg SOAP_PASSWORD="..." \
-    https://github.com/NotSpecial/fairguidegenerator.git
-
-# Run on port 9876 (choose whatever you like)
-docker run -p 9876:80 fairguidegenerator
+```python
+SOAP_USERNAME = "..."
+SOAP_PASSWORD = "..."
+FONT_URL = "..."
 ```
 
-Done!
 
-The SOAP Credentials do not need to be specified as build arguments,
-there are two other approaches to separate them from the build:
+## Deployment with Docker
 
-1. Specify `SOAP_USERNAME` and `SOAP_PASSWORD` as environment variables.
+The `Docker` image can be pulled directly from docker hub,
 
-2. Define `SOAP_USERNAME` and `SOAP_PASSWORD` in a file `config.py`
-   (name of your choice)
-   and set the *absolute* path to the config file as the environment variable
-   `FAIRGUIDEGENERATOR_CONFIG`:
-
-Finally, building should be automated with compose,
-the important configuration option is `build`
-([Check out the docs.](https://docs.docker.com/compose/compose-file/#build))
+TODO
 
 ## Development
 
@@ -68,16 +51,11 @@ source env/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Set credentials
-export SOAP_USERNAME=...
-export SOAP_PASSWORD=...
+# Set config (optional, default is 'config.py' in current working dir)
+export FAIRGUIDEGENERATOR_CONFIG=...
 
 # Run development server
 export FLASK_APP=app.py
 export FLASK_DEBUG=1
 flask run
 ```
-
-Now all is set up for development.
-Instead of using environment vars, the SOAP credentials can be put into a file named
-`config.py`.

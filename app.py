@@ -2,7 +2,7 @@
 # pylint: disable=locally-disabled, invalid-name
 
 """The app."""
-from os import getenv
+from os import getenv, getcwd, path
 from io import BytesIO
 from flask import Flask, send_file, url_for, abort, make_response
 
@@ -12,8 +12,9 @@ from fairguidegenerator.importer import Importer
 
 app = Flask('fairguidegenerator')
 
-# Try to load config specified by envvar, default to config.py in home dir
-config_file = getenv("FAIRGUIDEGENERATOR_CONFIG", )
+# Try to load config specified by envvar, default to config.py in work dir
+default_config = path.join(getcwd(), 'config.py')
+config_file = getenv("FAIRGUIDEGENERATOR_CONFIG", default_config)
 app.config.from_pyfile(config_file)
 
 # If STORAGE_DIR has not been defined, use '.cache' in current working dir

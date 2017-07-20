@@ -1,62 +1,56 @@
-# Use Arch linux as base because we need up to date version of TexLive+Python
+# Use Arch linux as base
+# This is an easy way to get up-to- date TexLive
+# If thats not needed the python image would suffice
 FROM dock0/arch
 
 # Set locale to something with utf-8 to avoid problems with files in python
 ENV LANG=en_US.UTF-8
 
-# Get development tools to compile uwsgi, Texlive (we also need latexextra)
-# and python
+# Install python, tex (we also need latexextra) and uwsgi (requires gcc)
 RUN pacman -Sy --noconfirm gcc \
     texlive-core texlive-bin texlive-latexextra \
     python python-pip
+RUN pip install uwsgi
 
 
-## TeX and Font Setup
+## TeX Setup
 
-# Set HOME so we can use a local TEXMF tree and fonts
+# Set HOME so we can use a local TEXMF tree for amivtex
 ENV HOME /
-
-# Add amivtex to local texmf tree
 COPY amivtex /texmf/tex/latex/amivtex
-
-# Docker build arg: Link to download fonts as .tar.gz
-ARG FONT_LINK
-
-# Download and extract DINPro to local fonts and update font cache
-RUN mkdir /.fonts ; \
-	curl $FONT_LINK \
-	| tar -xzC /.fonts
-#RUN fc-cache -f -v
 
 
 ## App Setup
 
-# Install uwsgi Python web server and app requirements
-RUN pip install uwsgi
 COPY requirements.txt /requirements.txt
 RUN pip install -r requirements.txt
 
-# Copy the current directory contents into the container at /app
-COPY . /
+COPY fairguidegenerator /fairguidegenerator
+COPY app.py /app.py
 
 
-## Configuration
+## Configuration Files
 
-# Allow configuration to be specified by environment var or build arg
-ARG SOAP_USERNAME
-ENV SOAP_USERNAME $SOAP_USERNAME
-ARG SOAP_PASSWORD
-ENV SOAP_PASSWORD $SOAP_PASSWORD
+# Environment variable for config, use path for docker secrets as default
+ENV FAIRGUIDEGENERATOR_CONFIG=/run/secrets/fairguidegenerator_config
 
 
-## uwsgi as entry point for the container
+## Entrypoint and default command
 
-# Expose port 80 for uwsgi
+# Expose port 80
 EXPOSE 80
 
-# uwsgi is entry point (disable file wrapper to send bytesio!)
-ENTRYPOINT ["uwsgi", \
+# Entrypoint script downloads non-public fonts at container start
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Run uwsgi to serve the app
+CMD ["uwsgi", \
 "--http", "0.0.0.0:80", \
-"--manage-script-name", \
+# More efficient usage of resources
+"--processes", "4", \
+# Otherwise uwsig will crash for bytesio
 "--wsgi-disable-file-wrapper", \
+# Allows accessing the app at / as well as /fairguidegenerator
+"--manage-script-name", \
 "--mount", "/fairguidegenerator=app:app"]
