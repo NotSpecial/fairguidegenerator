@@ -6,7 +6,9 @@ from os import getenv, getcwd, path
 from io import BytesIO
 from flask import Flask, send_file, url_for, abort, make_response
 
-from fairguidegenerator.tex import render_tex
+from jinjatex import Jinjatex
+from jinja2 import PackageLoader, StrictUndefined
+
 from fairguidegenerator.importer import Importer
 
 
@@ -20,8 +22,13 @@ app.config.from_pyfile(config_file)
 # If STORAGE_DIR has not been defined, use '.cache' in current working dir
 app.config.setdefault('STORAGE_DIR', './.cache')
 
-# Get CRM connection
+# Connection to AMIV SugarCRM, where company data is stored
 CRM = Importer(app.config['SOAP_USERNAME'], app.config['SOAP_PASSWORD'])
+
+TEX = Jinjatex(tex_engine='xelatex',
+               loader=PackageLoader('fairguidegenerator', 'tex_templates'),
+               undefined=StrictUndefined,
+               trim_blocks=True)
 
 
 def send(data):
@@ -46,7 +53,9 @@ def companypage(company_id):
         abort(404)
 
     # Compile
-    compiled = render_tex([companydata])
+    # compiled = render_tex([companydata])
+    compiled = TEX.compile_template('company_page.tex',
+                                    companies=[companydata])
 
     # Specify mimetype so browsers open it in preview
     return send(compiled)
@@ -70,5 +79,6 @@ def all_companies():
     companies = (CRM.get_company(_id)
                  for _id in CRM.get_companies().values())
 
-    compiled = render_tex(companies)
+    compiled = TEX.compile_template('company_page.tex',
+                                    companies=companies)
     return send(compiled)
