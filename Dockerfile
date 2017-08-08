@@ -23,6 +23,8 @@ CMD ["uwsgi", \
 "--processes", "4", \
 # Otherwise uwsig will crash with bytesio
 "--wsgi-disable-file-wrapper", \
+# Exit if app cannot be started, e.g. if config is missing
+"--need-app", \
 # Allows accessing the app at / as well as /fairguidegenerator
 "--manage-script-name", \
 "--mount", "/fairguidegenerator=app:app"]
