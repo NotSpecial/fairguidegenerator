@@ -17,7 +17,8 @@ SOAP_PASSWORD = "..."
 
 ## Deployment with Docker
 
-A docker image is available under `notspecial/amivtex` in the docker hub.
+A docker image is available under `notspecial/fairguidegenerator`
+in the docker hub.
 Both the config file and a URL to access the (non-public) DINPro
 fonts are needed to run it. The URL can also be found in the
 [AMIV Wiki](https://wiki.amiv.ethz.ch/Corporate_Design#DINPro).
