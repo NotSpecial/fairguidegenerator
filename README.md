@@ -1,3 +1,7 @@
+**NOTE:** This tool has been integrated into the contract generation tool.
+Development is continued in [the ETH gitlab](https://gitlab.ethz.ch/amiv/kontakt/contractor)!
+
+
 # Fairguidegenerator
 
 A tool to create AMIV Kontakt fairguide pages for companies.
